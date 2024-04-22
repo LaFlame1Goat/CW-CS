@@ -1,0 +1,78 @@
+import sympy
+import random
+import time
+
+def extended_gcd(a, b):
+    if b == 0:
+        return (a, 1, 0)
+    else:
+        g, x, y = extended_gcd(b, a % b)
+        return (g, y, x - (a // b) * y)
+
+def mod_inverse(a, m):
+    g, x, y = extended_gcd(a, m)
+    if g != 1:
+        raise ValueError('Modular inverse does not exist')
+    else:
+        return x % m
+
+def brute_force_d(e, phi_n):
+    d = 2
+    while True:
+        if (d * e) % phi_n == 1:
+            return d
+        d += 1
+
+def factorize(N):
+    p = sympy.prevprime(int(N**0.5))
+    while N % p != 0:
+        p = sympy.prevprime(p - 1)
+    q = N // p
+    return p, q
+
+def generate_rsa_key(bit_length, e, N):
+    p, q = factorize(N)
+    phi_n = (p - 1) * (q - 1)
+    
+    start_time = time.time()
+    d_mod_inverse = mod_inverse(e, phi_n)
+    mod_inverse_time = time.time() - start_time
+    
+    start_time = time.time()
+    d_brute_force = brute_force_d(e, phi_n)
+    brute_force_time = time.time() - start_time
+    
+    return (p, q), e, (d_mod_inverse, mod_inverse_time, d_brute_force, brute_force_time)
+
+def main():
+    N = int(input("Enter the RSA modulus (N): "))
+    e = int(input("Enter the public exponent (e): "))
+    
+    p, q = factorize(N)
+    phi_n = (p - 1) * (q - 1)
+    
+    start_time = time.time()
+    d_mod_inverse = mod_inverse(e, phi_n)
+    mod_inverse_time = time.time() - start_time
+    print("Private exponent d (calculated using modular inverse):", d_mod_inverse)
+    print("Time taken for modular inverse calculation:", mod_inverse_time, "seconds")
+    
+    start_time = time.time()
+    d_brute_force = brute_force_d(e, phi_n)
+    brute_force_time = time.time() - start_time
+    print("Private exponent d (brute force):", d_brute_force)
+    print("Time taken for brute force calculation:", brute_force_time, "seconds")
+    
+    bit_lengths = [8, 16]
+    for bit_length in bit_lengths:
+        print(f"\nGenerating {bit_length}-bit RSA key:")
+        rsa_key, e, (d_mod_inverse, mod_inverse_time, d_brute_force, brute_force_time) = generate_rsa_key(bit_length, e, N)
+        print("p, q:", rsa_key)
+        print("Public exponent (e):", e)
+        print("Private exponent d (calculated using modular inverse):", d_mod_inverse)
+        print("Time taken for modular inverse calculation:", mod_inverse_time, "seconds")
+        print("Private exponent d (brute force):", d_brute_force)
+        print("Time taken for brute force calculation:", brute_force_time, "seconds")
+
+if __name__ == "__main__":
+    main()
